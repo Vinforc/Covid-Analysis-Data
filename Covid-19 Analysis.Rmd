@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Import Packages
-Import required packages
+Here we will import required packages
 
 ```{r import}
 library(tidyverse)
@@ -20,9 +20,11 @@ library(ggplot2)
 library(dplyr)
 ```
 
-## URLS for data sources
+## URLS for data sources, data description, and question of interest statement
 
-Get the data URLS
+Below we will Get the data URLS from Github. This is data regarding COVID19 US cases and deaths from the Johns Hopkins github site. It contains information up to 2023-03-09.
+
+We will be analyzing this data in order to see the deaths per millions of different states in the graphs below (beyond those that were from class), and we will also highlight the states NY, CA, TX, FL, IL, & CO on a time series graph.
 
 ```{r urls}
 urls <- c("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv",
@@ -33,7 +35,7 @@ urls <- c("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse
 ```
 
 ## read in the datasets into variable names
-Create the dataframes
+Creating the dataframes
 
 ```{r variables}
 global_cases <- read_csv(urls[2])
@@ -42,7 +44,7 @@ us_cases <- read_csv(urls[1])
 us_deaths <- read_csv(urls[3])
 ```
 ## fixing
-cleaning and transforming
+cleaning and transforming: we end up dropping the global data sets and decide to just focus on US for our analysis
 ```{r cleaning}
 #tidying global cases and deaths
 global_cases <- global_cases %>%
@@ -105,6 +107,9 @@ us_by_state <- us %>%
 
 ```
 ## showing this on a graph based on latest date available
+
+Below we will show the top deaths per million (cumulative) per state/territory in the US from our maximum date, 2023-03-09. We did not do this in class.
+The Top two, "Diamond Princess", and "Grand Princess", are cruise ship cohorts with very small populations, so even a handful of COVID deaths will translate to a large "per million" rate, which is why they are at the top of the list. Based on the data, The top deaths per million are as follows:
 ```{r us-by-state-graph}
 # pick the most recent date in your data
 latest_date <- max(us_by_state$date)
@@ -129,8 +134,11 @@ ggplot(df_latest, aes(x = reorder(Province_State, deaths_per_mill),
   theme(
     axis.text.y = element_text(size = 6)  # shrink state labels if you have many
   )
-```
 
+```
+## Highlighting the states
+
+Below we highlight NY, CA, TX, FL, IL, & CO in a timeseries graph to see the deaths per million over time for these specific states. We did not do this in class. I found it interesting that NY had such a sharp, near 90 degree incline of deaths - unlike any other state shown on the graph. Even other high population stats such as CA and TX did not show such a steep incline. Could this be cause of some other reasons such as recording faulty numbers, or was NY just really that bad in comparison to everywhere else?
 ```{r state highlights}
 # pick a few states to highlight
 highlights <- c("New York", "California", "Texas", "Florida", "Illinois", "Colorado")
@@ -161,6 +169,7 @@ us_totals  <- us_by_state %>%
 
 ```
 ## plotting us_totals
+The graph below will compare cases and deaths in the whole US, as we did in class.
 ```{r  us_totals_plot}
 us_totals %>%
   filter(cases>0)%>%
@@ -175,6 +184,7 @@ us_totals %>%
   labs(title="COVID19 in US", y = NULL)
 ```
 ##state of NY plot
+The graph below will compare cases and deaths in the whole state of NY, as we did in class.
 ```{r state-of-ny-plot}
 state<- "New York"
 us_by_state %>%
@@ -212,7 +222,7 @@ us_state_totals %>%
 
 ```
 ## model data
-
+We will fit a model below to see how the cases/thou effects the deaths/thou.
 ```{r model}
 mod <- lm(deaths_per_thou ~ cases_per_thou, data = us_state_totals)
 summary(mod)
@@ -225,8 +235,14 @@ us_state_totals %>% mutate(pred=predict(mod))
 us_total_w_pred <- us_state_totals %>% mutate(pred=predict(mod))
 ```
 ## plot actual vs predictions
+We can see the regression prediction in red, our data seems to loosely follow this, showing a positive correlation between cases and deaths, as expected
 ```{r plot-preds}
 us_total_w_pred %>% ggplot() +
   geom_point(aes(x=cases_per_thou, y = deaths_per_thou), color = "blue")+
   geom_point(aes(x=cases_per_thou, y = pred), color = "red")
 ```
+## Conclusion and Biases
+Possible biases in data could relate to population, and population age. Since Covid targeted the elderly, places with high age population may have recorded more deaths than low age population places. Population density can also play a part, counties with more spread out housing could be less affected that cities with compact housing.
+Personal biases may exist in analyzing data from different sides of the political spectrum.
+
+In conclusion, these were tough times for all states and provinces as outlined in the data, perhaps we can use past data to better get a handle on future outbreaks that may arise from nature or other lab leaks.
